@@ -38,6 +38,8 @@
 | 01:1x | 固化为本仓库：改名、拆出脚本、补 LICENSE 与自检 | 从"本机改动"变为"可分发的包" | `node scripts/verify-compat.mjs` 全通过 |
 | 01:25 | 修正客户端模块 id（`dsh-voice-mode` → `dsh-voice-mode-desktop`） | 包改名后客户端 bundle 仍用旧 id 注册，宿主按包名找不到它，界面上的语音按钮与状态条消失 | 新增自检项"客户端 bundle id 与包名一致"，14/14 通过 |
 | 01:5x | 自研云端朗读客户端 `lib/edge-tts.js`，移除 `msedge-tts` 依赖与安装脚本 | 第三方库里的 `require("buffer/index")` 在桌面宿主上解析失败会导致整个插件无法加载；靠安装脚本修会被 pnpm 默认拦截，别人装了可能起不来 | 模块直测：合成 18576 / 10080 字节、音色 322 个；端到端：真实 host 上 `POST /voice-mode/preview` 返回 200 `audio/mpeg` 14544 字节，且此时 profile 内已无 `msedge-tts` |
+| 02:3x | 发布 0.1.0 到 npm（作用域 `@nutshelllee`） | 目标：让用户能在插件页按包名安装 | 从 npm 装进空 profile，文件与依赖齐全 |
+| 02:4x | **修正默认语速下的合成为空**：SSML 的 `<prosody>` 始终带上 pitch / rate / volume 三个属性，`lib/edge-tts.js` 发布为 0.1.1 | 自研客户端的 SSML 只在语速不等于 1 时才输出属性；服务端对没有属性的 `<prosody>` 直接断开连接、返回零音频。默认设置正好走这条路，因此"没改过语速"的用户会完全听不到朗读 | 自检改为覆盖不传语速、语速 1、语速 1.6 三种情况，全部合成成功；端到端 `POST /voice-mode/preview` 在不传语速时返回 200 `audio/mpeg` 8784 字节、语速 1.3 时 13392 字节 |
 
 ---
 
