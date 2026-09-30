@@ -1,0 +1,17 @@
+# dsh-voice-mode-desktop bundle patch.
+#
+# Mounts this package's host half as the `voice-mode` row. The row id stays
+# `voice-mode` on purpose: existing profile patches, saved settings and the
+# client half all address it by that id.
+#
+# The module is addressed relative to this package (a bundle patch resolves its
+# relative specifiers against the bundle directory), instead of by bare package
+# name. On DSH 0.2 hosts the loader resolves bare specifiers of a profile-mounted
+# third-party plugin against the application directory, where the package is not
+# installed, and the entry then fails with ERR_MODULE_NOT_FOUND.
+#
+# The client half is a `dsh.client` row, so the Web host picks it up from
+# package.json `dsh.client` rather than from this file.
+- insert:
+    - id: voice-mode
+      name: './lib/index.js'
