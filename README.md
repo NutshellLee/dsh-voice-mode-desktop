@@ -1,5 +1,7 @@
 # dsh-voice-mode-desktop
 
+English | [中文](./README.zh.md)
+
 Full-duplex voice mode for **DeepSeek Harness 0.2 (desktop)**: speak and the words stream into the draft, pause and the message sends, the reply is read sentence by sentence, and speaking again interrupts the read-aloud. Ships an in-app settings page for reading speed, input mode and captions.
 
 This is an adapted fork of [`dsh-voice-mode`](https://github.com/qishuilalala/dsh-voice-mode) 0.7.15 (which in turn derives from [`haoku123/dsh-voice`](https://github.com/haoku123/dsh-voice)). Both are MIT licensed; see [LICENSE](./LICENSE).
