@@ -1,6 +1,6 @@
 {
   "name": "@nutshelllee/dsh-voice-mode-desktop",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Full-duplex voice mode for DeepSeek Harness 0.2 desktop: streaming ASR to draft, sentence read-aloud, barge-in, live captions, plus an in-app settings page. An unofficial compatibility fork of dsh-voice-mode 0.7.15.",
   "type": "module",
   "main": "lib/index.js",
