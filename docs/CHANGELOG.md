@@ -42,6 +42,17 @@
 | 02:4x | **修正默认语速下的合成为空**：SSML 的 `<prosody>` 始终带上 pitch / rate / volume 三个属性，`lib/edge-tts.js` 发布为 0.1.1 | 自研客户端的 SSML 只在语速不等于 1 时才输出属性；服务端对没有属性的 `<prosody>` 直接断开连接、返回零音频。默认设置正好走这条路，因此"没改过语速"的用户会完全听不到朗读 | 自检改为覆盖不传语速、语速 1、语速 1.6 三种情况，全部合成成功；端到端 `POST /voice-mode/preview` 在不传语速时返回 200 `audio/mpeg` 8784 字节、语速 1.3 时 13392 字节 |
 | 03:0x | 发布 0.1.2：设置页文案与侧栏项跟随界面语言（中文 / English），新增中文说明 `README.zh.md`，两版说明顶部互相切换 | 侧栏项名称与设置页文案此前写死为中文，英文界面的用户会看到中文；仓库此前只有英文说明，中文读者阅读成本高 | 语法检查通过；宿主兼容自检 14/14；改动后从 npm 安装并跑朗读自检 |
 | 10-03 02:2x | **朗读前剥离链接**（0.1.3）：`sanitizeForTts` 把 Markdown 链接还原为链接文字、裸网址整段去掉 | 用户反馈朗读会把参考链接逐个念出来，听起来很累；原有清洗只替换 Markdown 符号，链接原样进入合成 | 等价输入输出对比：`[npm 页面](https://…)` → `npm 页面`，`文档在 https://… 这里` → `文档在这里`，`www.example.com` → 去掉；语法检查通过 |
+| 10-08 22:2x | **抓到并修掉两个漏点**：① 客户端不再用渲染期快照拼整段再 `setDraft` 覆盖，改为 `inputActions.captureInsertion()` + `insertText(text, span)` 往实时光标处插入（带草稿版本号校验，冲突时拒绝而不是覆盖）；② `finalizeSegment` 的 `segmentEpoch !== epochSnapshot + 1` 守卫不再丢弃整段——改为"段的开合通知"（`config.onSegmentStart/onSegmentEnd`），输入框侧按段号升序排队落地，旧段回来晚了就等它、排在它应该在的位置；③ `submitDraftNow` 增加落地闸门，队列没清空就不发（宁可这次不自动发，也不发半截话），空值判断改用本轮已插入文本 + 快照兜底 | 22:34 那次复现的日志给出定论：`asr final epoch=18 … chars=91` 紧接 `diag final-dropped-epoch {"epoch":18,"now":20,"chars":91}`——整段 91 字被守卫丢弃，用户那轮只收到后一段"也不准确啊"。同轮 `submit-called {"snapshotLen":133,"cachedLen":100}` 另证快照确实滞后 33 字（第一处漏点的形态） | 语法检查通过；行为验证：重启后连说三段（其中一段偏长、说完立刻接下一句），日志中 `segment-open` / `segment-resolved` / `insert-ok` 的段号应升序且与 `asr final` 一一对应，消息里三段齐全、顺序正确 |
+| 10-08 23:1x | **发布 0.1.4**：版本 0.1.3 → 0.1.4；`files` 补上 `lib/voice-dict.mjs` —— 代码在启动时就 import 它，此前却没有随包发布，从 npm 装这一版会直接加载失败；两版 README 各补两条限制：诊断会把识别原文写进本机日志、纠错词表是本地文件不入库 | 推到公共仓库前做的打包与隐私核对：仓库里没有用户名、路径、邮箱等个人信息；词条数据在 `~/.dsh/voice-dict.json`，在仓库之外 | 语法检查通过；`git ls-remote` 通；推送后核对仓库文件清单 |
+| 10-08 19:5x | **只加诊断、不改行为**：host 半体新增 `POST {base}/diag`（把诊断事件转写成一行日志），客户端新增 `diag()`（发完即忘）并埋点 `finalize-skipped-playing` / `final-sent` / `final-dropped-epoch` / `final-empty` / `segment-open` / `segment-resolved` / `insert-*` / `submit-*` / `autosend-*`；`asr final` 由截断 40 字改为最多 400 字；客户端加载时发一条 `client-boot` 做通道自检 | 用户报告连续说话时"前面那截没进输入框"。客户端 `console.log` 根本不进应用日志（`lib/main.js` 的 `console-message` 只放行 `[next-ui-diagnostic]` 等固定标记），没有日志就无法判定丢在哪一步 | 已验证：日志出现 `[dsh-voice-mode] diag client-boot {"build":"4575aac"}`，通道通；复现一次后逐段对齐 `asr final` 与 `diag` 行，定位到上面那两个漏点 |
+
+修掉的这两个漏点（先由日志判定，再动代码）：
+
+1. **覆盖**：`engine.onSegment` 原来用渲染期快照 `draftRef.current` 做"读—改—写"再 `setDraft` 覆盖整段。快照只在界面重画时刷新，两段识别在同一个渲染窗口内落地时，后一段用陈旧的前值拼串，把前一段覆盖掉。现在写入交给宿主的 `insertText(text, span)`：位置来自 `captureInsertion()` 的实时取点，草稿版本号对不上时它返回失败而不是覆盖；失败就留在队首重试（每 150ms 一次，直到成功），绝不静默丢字，也不覆盖用户选中的内容。
+2. **丢弃**：`finalizeSegment` 里 `segmentEpoch !== epochSnapshot + 1` 的两处守卫，会在"这段的响应回来时已经开始了新的一段"时把整段已识别文字丢掉（22:34 那次正是如此）。现在段在定稿开始时"开"、拿到文字或确认拿不到时"合"，输入框侧按段号升序排队：更早的段没落地就压住后面的，落地顺序永远与说话顺序一致；再加 30 秒超时兜底，防异常路径把队列卡死。
+3. 顺带把 `submitDraftNow` 的落地闸门补上：队列没清空就不发消息，避免把半截话自动发出去。
+
+宿主那条写入接口（`inputActions.captureInsertion()` / `insertText(text, span)`）与官方 `dsh-experimental-client-ui-voice-input` 用的是同一条，语义为"插在取点处、冲突即拒绝"。`insertText`/`captureInsertion` 不存在时会退回旧的整段覆盖写法，保证老版本宿主仍可用。
 
 ---
 

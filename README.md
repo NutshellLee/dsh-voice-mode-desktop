@@ -121,6 +121,8 @@ No model files are bundled. The plugin downloads what it needs the first time th
 - **Cloud TTS by default**: `ttsEngine: edge` sends the spoken text to Microsoft. Use `vits` or `kokoro` for fully local synthesis.
 - **Barge-in on speakers** depends on the browser's echo cancellation; on Windows, hold-to-talk or headphones give the most reliable interruption.
 - **Settings persistence** covers `rate` and `mode` (the two `volatile` fields). Other options are read from the profile patch at startup.
+- **Diagnostics write to a local log**: to pin down "an entire utterance went missing", the plugin writes every finalised segment (up to 400 characters) plus a set of pipeline events into DSH's application log (`desktop-next.log`). The log stays on the machine and the diagnostics endpoint listens on loopback only (`POST /voice-mode/diag`, same-origin checked); its content, however, is your own dictated text — clear the log periodically, and avoid installing this on a shared account.
+- **The correction dictionary is a local file**: entries live in `~/.dsh/voice-dict.json` (override with the `DSH_VOICE_DICT` environment variable) and are not shipped with this package; the repository carries the matching logic only, never anyone's entries.
 
 ## Compatibility matrix
 
