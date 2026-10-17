@@ -11,7 +11,6 @@
 - 识别引擎下拉真的能切了：新增 readAsrEngine / applyAsrEngine，面板、设置接口和工具走同一条切换路径；档位落盘到 %LOCALAPPDATA%\dsh-voice-mode\settings.json，重启后恢复。
 - 重启职责拆到独立插件 @nutshelllee/dsh-agent-restart：语音插件只保留语音，启动时读 voice-resume.json 决定是否自动开语音。
 - 重启后的续跑由 agent-restart 完成：应用就绪后 5 秒排一条来源为 restart 的消息开新回合；只排一次，不建目标、不标完成。
-- 工具返回值不再造假：restart_harness 在 2.5 秒内检查 restart.log，没有新行就返回 ok=false。
 - 文档：docs/restart-design.md 记录重启机制的调研、取舍和验收标准。
 
 ## 1. 踩坑现场
