@@ -19,6 +19,15 @@ This is an adapted fork of [`dsh-voice-mode`](https://github.com/qishuilalala/ds
 - **Full duplex**: speaking while the reply is read stops playback and cancels the running turn.
 - **Settings page**: reading speed (0.5–2.0), input mode (hold / continuous), caption show-hide, and a one-click audio self-test. Reachable from the sidebar **Plugins** page as the item **语音模式 / Voice mode**. The self-test deliberately separates synthesis from playback, so a silent reply can be traced to the engine or to the audio output instead of being guessed at.
 
+## How to use it: hold to speak
+
+Day to day this plugin is meant to be used **hold-to-speak**: hold the shortcut, say one sentence, release. In the voice session pick "hold" as the recording mode and "manual" as the barge-in mode.
+
+**Full duplex (always listening + auto barge-in) is not the recommended everyday mode, and it has no regression coverage.** The reason is practical: it hands the timing to the model. It may start acting before you finish, or keep listening after you are done, and you lose control over when it stops and when it acts. Hold-to-speak keeps both decisions with you: release means the sentence is finished, and only then may it act.
+
+- Want predictable control: hold-to-speak + manual barge-in (recommended).
+- Trying full duplex: fine, but treat it as experimental. If it talks over you or fails to stop, switch back to hold-to-speak before blaming the plugin.
+
 ## Differences from upstream `dsh-voice-mode` 0.7.15
 
 | Area | Change | Why |
@@ -89,6 +98,8 @@ The Edge engine talks to Microsoft's read-aloud endpoint directly from `lib/edge
 node scripts/check-tts.mjs
 ```
 
+The read-aloud connection picks up a proxy automatically: `HTTPS_PROXY` / `HTTP_PROXY` first, otherwise the Windows system proxy from Settings (the `ProxyServer` value under `Internet Settings`). Microsoft is picky about the source IP — on some networks a direct connection is answered with 403 while going through a proxy works, and `ws` ignores the system proxy by default, so the client has to do this itself. To force a direct connection, set `NO_PROXY` to `speech.platform.bing.com`.
+
 ## Verify
 
 ```bash
@@ -123,6 +134,7 @@ No model files are bundled. The plugin downloads what it needs the first time th
 - **Settings persistence** covers `rate` and `mode` (the two `volatile` fields). Other options are read from the profile patch at startup.
 - **Diagnostics write to a local log**: to pin down "an entire utterance went missing", the plugin writes every finalised segment (up to 400 characters) plus a set of pipeline events into DSH's application log (`desktop-next.log`). The log stays on the machine and the diagnostics endpoint listens on loopback only (`POST /voice-mode/diag`, same-origin checked); its content, however, is your own dictated text — clear the log periodically, and avoid installing this on a shared account.
 - **The correction dictionary is a local file**: entries live in `~/.dsh/voice-dict.json` (override with the `DSH_VOICE_DICT` environment variable) and are not shipped with this package; the repository carries the matching logic only, never anyone's entries.
+- **Full duplex has no automated regression**: always-listening + auto barge-in depends on echo cancellation and endpointing, and its timing varies with device and room. The checks in this repo only cover the hold-to-speak path; full duplex gets manual smoke testing only, so verify it by hand when you touch that code.
 
 ## Compatibility matrix
 

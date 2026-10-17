@@ -1,3 +1,13 @@
 node_modules/
 .dsh-scratch/
 *.log
+# 2026-10-17：历史备份集中放这里，不参与运行也不再散落在 lib/ 里
+backups/
+__pycache__/
+*.pyc
+
+# 本地备份/缓存，不进仓库
+*.bak-*
+*.orig
+__pycache__/
+*.pyc
