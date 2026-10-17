@@ -126,6 +126,12 @@ No model files are bundled. The plugin downloads what it needs the first time th
 - **Progress**: download and load progress is reported in the voice status bar; failures are surfaced in the chat rather than silently ignored.
 - **Offline**: recognition needs the model files (and `ttsEngine: edge` needs network on every read-aloud). To run fully offline, pre-populate the cache directory and use `vits` / `kokoro`.
 
+## Restart-plugin integration
+
+This plugin can pair with [`dsh-agent-restart`](https://github.com/NutshellLee/dsh-agent-restart). When the agent restarts the app itself, that plugin records whether voice mode was on and writes a handover file after restart; this plugin reads it on startup, restores voice mode automatically (hold and speak), and deletes the file after a confirmed resume.
+
+It only applies to agent-initiated restarts; closing and reopening the app by hand does not auto-restore. Without the restart plugin, this plugin works on its own.
+
 ## Known limitations
 
 - **Compiled artifacts**: `lib/` is upstream's built output with this fork's edits applied, not regenerated from source. Read the diff against `dsh-voice-mode@0.7.15` rather than expecting readable source.
