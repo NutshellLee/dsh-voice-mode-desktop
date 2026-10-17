@@ -22,25 +22,13 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "lib/index.js",
-    "lib/edge-tts.js",
-    "lib/proxy-agent.js",
-    "lib/client.js",
-    "lib/voice-dict.mjs",
-    "lib/sense-worker.mjs",
-    "lib/tts-vits-worker.cjs",
+    "lib",
+    "scripts",
+    "docs/CHANGELOG.md",
     "cordis.patch.yml",
-    "scripts/verify-compat.mjs",
-    "scripts/check-tts.mjs",
     "README.md",
     "README.zh.md",
-    "LICENSE",
-    "scripts/check-env.mjs",
-    "scripts/check-asr.mjs",
-    "scripts/fixtures/asr-zh.wav",
-    "scripts/fixtures/README.md",
-    "scripts/install-env.mjs",
-    "scripts/README.md"
+    "LICENSE"
   ],
   "scripts": {
     "verify": "node scripts/verify-compat.mjs",
