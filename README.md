@@ -19,6 +19,14 @@ This is an adapted fork of [`dsh-voice-mode`](https://github.com/qishuilalala/ds
 - **Full duplex**: speaking while the reply is read stops playback and cancels the running turn.
 - **Settings page**: reading speed (0.5–2.0), input mode (hold / continuous), caption show-hide, and a one-click audio self-test. Reachable from the sidebar **Plugins** page as the item **语音模式 / Voice mode**. The self-test deliberately separates synthesis from playback, so a silent reply can be traced to the engine or to the audio output instead of being guessed at.
 
+## One conversation, end to end
+
+1. Hold the shortcut and speak; recognition streams into an editable draft.
+2. Release to submit; the agent starts replying.
+3. Replies are synthesized sentence by sentence while captions follow along.
+4. Speaking again during playback interrupts it immediately and starts the next turn.
+5. One action decides everything: releasing is what tells it you are done talking.
+
 ## How to use it: hold to speak
 
 Day to day this plugin is meant to be used **hold-to-speak**: hold the shortcut, say one sentence, release. In the voice session pick "hold" as the recording mode and "manual" as the barge-in mode.
@@ -27,6 +35,44 @@ Day to day this plugin is meant to be used **hold-to-speak**: hold the shortcut,
 
 - Want predictable control: hold-to-speak + manual barge-in (recommended).
 - Trying full duplex: fine, but treat it as experimental. If it talks over you or fails to stop, switch back to hold-to-speak before blaming the plugin.
+
+## Test environment
+
+All speed and resource numbers below come from this machine, not from synthetic or borrowed figures:
+
+- CPU: Intel Core i5-14490F
+- GPU: NVIDIA GeForce RTX 3070 Ti (8 GB VRAM)
+- RAM: 32 GB
+- OS: Windows 11 Pro (10.0.26200)
+
+Different hardware scales the numbers; VRAM use depends on whether the GPU tier is loaded.
+
+## Recognition engines (three tiers)
+
+| Tier | Model | Runs on | Speed | Resources | Notes |
+|---|---|---|---|---|---|
+| GPU preferred | Nano bf16 | GPU | ~0.4 s/sentence | ~6-9 s first load, ~1.9 GB VRAM resident | Most accurate, default |
+| CPU only | Nano int8 | CPU | ~0.9 s/sentence | No VRAM, no Python needed | Slightly slower but steady |
+| SenseVoice only | SenseVoice int8 | CPU | Fast | Lightest | Weaker on English terms |
+
+Switching takes effect immediately and is written to disk, so it survives a restart. The settings page shows the current tier, GPU layer status and last recognition latency.
+
+Accuracy (observed on the same Chinese test corpus; no standard WER benchmark was run):
+
+- GPU preferred (bf16): steadiest on numbers, English proper nouns and mixed Chinese/English; recommended.
+- CPU only (int8): close to bf16 on everyday Chinese, occasional differences on numbers and names (int8 quantization loss).
+- SenseVoice only: usable Chinese, noticeably weaker on English terms and names (DSH may be spelled out, opencode heard as open cod).
+
+## Read-aloud engines
+
+| Engine | Where | Traits | Speed |
+|---|---|---|---|
+| Edge | Cloud | Many voices, needs network | Network-dependent |
+| ZipVoice | Local GPU | Voice cloning, natural mixed Chinese/English | ~0.6 s/sentence, up to 2x playback with time-domain splicing |
+| VITS | Local CPU | Lightweight offline | Slower than GPU options |
+| Kokoro | Local | Lightweight fallback | Fast, but mispronounces English words |
+
+The first synthesis after switching engines takes a few seconds to load the model; afterwards it runs per sentence.
 
 ## Differences from upstream `dsh-voice-mode` 0.7.15
 
