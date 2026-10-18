@@ -42,7 +42,11 @@
 ### 5. 外部助手进程 + WMI（采用）
 
 助手脚本：睡 Delay → 强杀 `DSH NEXT` → 循环等进程清空（≤60s）→ 等 3s →
-写一次性标记 `agent-restart.flag` → `Start-Process` 应用；每步写 `restart.log`。
+写一次性标记 `agent-restart.flag` → 用 **explorer.exe** 拉起应用（`& (Join-Path $env:SystemRoot 'explorer.exe') "<应用 exe>"`）；
+每步写 `restart.log`。拉起的执行者是系统里的资源管理器，不是助手自己，所以助手发出这条命令后即使退出，启动也不受影响。
+
+失败窗口（已知、接受）：助手在"杀完应用、还没发出 explorer 命令"之间被杀，应用就停在关闭状态，没人再拉起。
+要避免只能上常驻服务/计划任务，代价更大，不做。
 
 关键：助手必须用 **WMI** 创建（`Invoke-CimMethod Win32_Process Create`），
 否则它会跟着应用一起被杀。
