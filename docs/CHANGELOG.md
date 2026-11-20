@@ -6,11 +6,12 @@
 
 ---
 
-## 0.1.10（2026-11-21）
+## 0.1.12（2026-11-21）
 
 - 新增 SAPI 朗读引擎（`ttsEngine: sapi`）：走 Windows 自带的 `System.Speech`，不用下模型、不用联网，适合只想有个能出声的兜底、又不想为 Edge 联网或 VITS 预热付代价的场景。
 - 桥接方式：`lib/sapi-tts.ps1` 接一段文本和一个输出 wav，内部用 `SpeechSynthesizer` 合成；中文文本优先挑已安装的中文音色（Yaoyao / Huihui 一类），挑不到就退回系统默认，日志里留引擎名和失败原因。
 - 设置面板的引擎下拉加了 sapi 这一项；README 和 README.zh 的引擎表、配置示例、离线说明同步补上。
+- 打包修正：lib 下的 *.bak-* 备份文件此前被 files 字段带进 npm 包，已挪到 backups/ 并加 .npmignore 排除。
 - 已知边界：音色质量和断句取决于系统里装了哪些 voice，跟 VITS / Kokoro 的模型无关；换机器可能声音不一样。
 
 ## 0.1.9（2026-10-26）
