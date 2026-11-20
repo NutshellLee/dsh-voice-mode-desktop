@@ -15,7 +15,7 @@ This is an adapted fork of [`dsh-voice-mode`](https://github.com/qishuilalala/ds
 ## What it does
 
 - **Voice in**: press-and-hold or continuous listening, streaming recognition into an editable draft, silence-based auto-send.
-- **Voice out**: sentence-by-sentence read-aloud (Edge cloud TTS by default; local VITS / Kokoro optional), live captions.
+- **Voice out**: sentence-by-sentence read-aloud (Edge cloud TTS by default; local SAPI / VITS / Kokoro / ZipVoice optional), live captions.
 - **Full duplex**: speaking while the reply is read stops playback and cancels the running turn.
 - **Settings page**: reading speed (0.5–2.0), input mode (hold / continuous), caption show-hide, and a one-click audio self-test. Reachable from the sidebar **Plugins** page as the item **语音模式 / Voice mode**. The self-test deliberately separates synthesis from playback, so a silent reply can be traced to the engine or to the audio output instead of being guessed at.
 
@@ -71,8 +71,11 @@ Accuracy (observed on the same Chinese test corpus; no standard WER benchmark wa
 | ZipVoice | Local GPU | Voice cloning, natural mixed Chinese/English | ~0.6 s/sentence, up to 2x playback with time-domain splicing |
 | VITS | Local CPU | Lightweight offline | Slower than GPU options |
 | Kokoro | Local | Lightweight fallback | Fast, but mispronounces English words |
+| SAPI | Local | Windows built-in voices, no model download; prefers a Chinese voice for Chinese text | Depends on the installed voice; no warm-up |
 
 The first synthesis after switching engines takes a few seconds to load the model; afterwards it runs per sentence.
+
+SAPI is Windows-only: it drives `System.Speech`, which ships with .NET Framework, so this engine is unavailable on macOS and Linux.
 
 ## Differences from upstream `dsh-voice-mode` 0.7.15
 
@@ -127,7 +130,7 @@ Then enable it in the profile manifest (`dsh.profile.bundles`) and, optionally, 
     voice: zh-CN-XiaoxiaoNeural
     rate: 1.1
     mode: hold          # hold = push to talk, toggle = continuous listening
-    ttsEngine: edge     # edge | vits | kokoro
+    ttsEngine: edge     # edge | sapi | vits | kokoro | zipvoice
     bargeInMode: detect
     silenceMs: 1500
     autoSend: true
@@ -170,7 +173,7 @@ No model files are bundled. The plugin downloads what it needs the first time th
 - **Cache directory**: `%LOCALAPPDATA%\dsh-voice-mode\models` on Windows, `~/.cache/dsh-voice-mode/models` elsewhere.
 - **Integrity**: every file is checked against a pinned SHA-256 before use; partial downloads are written next to the target and only renamed once they verify.
 - **Progress**: download and load progress is reported in the voice status bar; failures are surfaced in the chat rather than silently ignored.
-- **Offline**: recognition needs the model files (and `ttsEngine: edge` needs network on every read-aloud). To run fully offline, pre-populate the cache directory and use `vits` / `kokoro`.
+- **Offline**: recognition needs the model files (and `ttsEngine: edge` needs network on every read-aloud). To run fully offline, pre-populate the cache directory and use `sapi` / `vits` / `kokoro`.
 
 ## Restart-plugin integration
 
@@ -181,7 +184,7 @@ It only applies to agent-initiated restarts; closing and reopening the app by ha
 ## Known limitations
 
 - **Compiled artifacts**: `lib/` is upstream's built output with this fork's edits applied, not regenerated from source. Read the diff against `dsh-voice-mode@0.7.15` rather than expecting readable source.
-- **Cloud TTS by default**: `ttsEngine: edge` sends the spoken text to Microsoft. Use `vits` or `kokoro` for fully local synthesis.
+- **Cloud TTS by default**: `ttsEngine: edge` sends the spoken text to Microsoft. Use `sapi`, `vits` or `kokoro` for fully local synthesis.
 - **Barge-in on speakers** depends on the browser's echo cancellation; on Windows, hold-to-talk or headphones give the most reliable interruption.
 - **Settings persistence** covers `rate` and `mode` (the two `volatile` fields). Other options are read from the profile patch at startup.
 - **Diagnostics write to a local log**: to pin down "an entire utterance went missing", the plugin writes every finalised segment (up to 400 characters) plus a set of pipeline events into DSH's application log (`desktop-next.log`). The log stays on the machine and the diagnostics endpoint listens on loopback only (`POST /voice-mode/diag`, same-origin checked); its content, however, is your own dictated text — clear the log periodically, and avoid installing this on a shared account.

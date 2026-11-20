@@ -73,6 +73,9 @@
 | Edge | 云端 | 音色多，需要联网 | 受网络影响 |
 | ZipVoice | 本地显卡 | 克隆音色、中英混合自然 | 约 0.6 秒/句，配合时域拼接可播到 2 倍速 |
 | VITS | 本地 CPU | 轻量离线 | 慢于显卡方案 |
+| SAPI | 本地 | Windows 自带音色，不用下模型；中文文本优先挑中文音色 | 取决于已装音色；无需预热 |
+
+SAPI 仅限 Windows：它调用 .NET Framework 自带的 `System.Speech`，macOS 和 Linux 上没有这个引擎。
 | Kokoro | 本地 | 轻量离线备选 | 快，但英文单词读不准 |
 
 切换朗读引擎之后第一次合成会慢几秒（加载模型），之后按句合成。
@@ -130,7 +133,7 @@ dsh plugin add link:/path/to/dsh-voice-mode-desktop
     voice: zh-CN-XiaoxiaoNeural
     rate: 1.1
     mode: hold          # hold = 按住说话，toggle = 持续聆听
-    ttsEngine: edge     # edge | vits | kokoro
+    ttsEngine: edge     # edge | sapi | vits | kokoro | zipvoice
     bargeInMode: detect
     silenceMs: 1500
     autoSend: true
